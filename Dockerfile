@@ -1,16 +1,15 @@
-FROM public.ecr.aws/lambda/python:3.8
+FROM amazon/aws-lambda-python:3.13
 
 # Install system dependencies
-RUN yum update -y && \
-    yum install -y \
-    gcc \
-    gcc-c++ \
-    python3-devel \
-    make \
-    && yum clean all
-
-# Copy requirements first to leverage Docker cache
-COPY requirements.txt ${LAMBDA_TASK_ROOT}
+RUN dnf update -y && dnf install -y \
+    mesa-libGL \
+    libX11 \
+    zip \
+    unzip \
+    tar \
+    bzip2 \
+    graphviz \
+    && dnf clean all
 
 # Add user
 USER nobody
@@ -19,22 +18,14 @@ USER nobody
 HEALTHCHECK CMD curl --fail http://localhost:8080/health || exit 1
 
 
-# Install Python packages with explicit version control
-RUN pip install --upgrade pip && \
-    pip install --no-cache-dir "numpy==1.19.5" && \
-    pip install --no-cache-dir "scipy==1.6.3" && \
-    pip install --no-cache-dir "faiss-cpu==1.7.1" && \
-    pip install --no-cache-dir "langchain>=0.1.0" && \
-    pip install --no-cache-dir "langchain-community>=0.0.10" && \
-    pip install --no-cache-dir -U boto3 botocore
+# Set up work directory
+WORKDIR /var/task
 
-# Verify installations
-RUN pip list && python -c "import faiss; import langchain; import langchain_community; print(f'Faiss version: {faiss.__version__}')"
+# Copy application files
+COPY . .
 
-# Copy function code
-COPY index.py ${LAMBDA_TASK_ROOT}
-COPY tools.py ${LAMBDA_TASK_ROOT}
-COPY local_index ${LAMBDA_TASK_ROOT}/local_index
+# Install Python dependencies
+RUN pip install -r requirements.txt
 
-# Set the CMD to your handler
-CMD [ "index.handler" ]
+# Run the application
+CMD ["lambda_handler.lambda_handler"]

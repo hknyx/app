@@ -1,11 +1,3 @@
 boto3
-botocore
-blinker
-python-docx
-PyPDF2
-fpdf
-matplotlib
-numpy
+pillow
 diagrams
-graphviz
-defusedxml==0.7.1
