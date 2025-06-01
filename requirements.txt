@@ -1,0 +1,11 @@
+boto3
+botocore
+blinker
+python-docx
+PyPDF2
+fpdf
+matplotlib
+numpy
+diagrams
+graphviz
+defusedxml==0.7.1

@@ -1,65 +1,71 @@
-# Leveraging Amazon Bedrock for Cloud Architecture Design
+# AWS Architecture-Designer
+
+## Leveraging Amazon Bedrock for Cloud Architecture Design
 
 This pattern demonstrates how to leverage Generative AI to accelerate and optimize cloud architecture design processes. The solution enables architects and development teams to generate standardized architecture patterns, optimize resource configurations, ensure compliance, and create detailed documentation. The implementation utilizes Amazon Bedrock capabilities to access enterprise data, generate recommendations, and automate architecture-related tasks while maintaining security and compliance requirements. This solution uses the following AWS services:
 
-
-* Amazon Bedrock for AI-powered assistance and automation
-* Amazon ECR
-* Amazon S3 for data storage
-* AWS Lambda
-* AWS IAM for security and access control
-* Drawio and mermaid.js for drawings
+- Amazon Bedrock for AI-powered assistance and automation
+- Amazon ECR
+- Amazon S3 for data storage
+- AWS Lambda
+- AWS IAM for security and access control
+- Drawio for drawings
 
 
 The pattern addresses common challenges in cloud architecture design, including:
 
-
-* Accelerating architecture design processes
-* Ensuring compliance with best practices
-* Visualisation and guidence of architecture design
-* Optimizing resource utilization and costs
-* Maintaining consistent documentation
-* Enabling collaboration across teams
-
+- Accelerating architecture design processes
+- Ensuring compliance with best practices
+- Visualisation and guidence of architecture design with Drawio
+- Optimizing resource utilization and costs
+- Maintaining consistent documentation
+- Enabling collaboration across teams
 
 
-This solution is particularly valuable for organizations seeking to streamline their cloud architecture design process while maintaining high standards of quality and compliance.
+
+**You can check the demo of this pattern from [Live Demo](http://35.94.27.240:8501/)**
 
 
-In the first part we are building Generative AI Agents using Amazon Bedrock Agents. In this part, we will harness the power of AI agents and tools to build an AI-powered AWS Solution Architect dubbed "Agent AWS".
 
-![Agent Helpful Example](/images/agent_helps.png)
+This solution is particularly valuable for organizations seeking to streamline their cloud architecture design process while maintaining high standards of quality and compliance. With the help of this tool you can:
+
+- Generate an AWS architecture Design and drawing by either providing the technical requirements as a text or you can upload a Business Requirement Document by upload function to provide details.
+- Generate Cloud formation Template based on the designed architecture
+- Upload your architectural drawings and ask the tool for explaning the details of the architecture
+- Estimate costs for the proposed architecture.
+
+In the first part we are building Generative AI Agents using Amazon Bedrock Agents.
 
 Over the course of this part, we will construct a Bedrock Agent that can assist with querying the AWS Well-Architected Framework and generating code.
 
-
-![Agent Architecture Diagram](/images/agent_arch.png)
-
-
+![Agent Architecture Diagram](images/agent_arch.jpg)
 
 ## Prerequisites
-
-This solution assumes you are working in an environment with access to [Python 3.9](https://www.python.org/getit/) or later and [Docker](https://www.docker.com/). 
+This solution assumes you are working in an environment with access to Python 3.9 or later and Docker. AWS Region: us-west-2 selected for the purpose of this solution.
 
 ## Setting up your local Environment
 
-1. **Clone the Repository:** Start by cloning the provided repository which contains the code for our agent.
+
+**Clone the Repository:** Start by cloning the provided repository which contains the code for our agent.
 
 ```bash
-git clone https://github.com/build-on-aws/amazon-bedrock-agents-quickstart.git
+
+git clone https://gitlab.aws.dev:makvac/ai-powered-modern-application-development.git
 cd amazon-bedrock-agents-quickstart
+
 ```
 
-2. **Install Dependencies:** Run the appropriate pip install command to download necessary packages.
+**Install Dependencies:** Run the appropriate pip install command to download necessary packages.
 
-``` bash
+```bash
+
 pip install -r requirements.txt
-```
 
+```
 
 ## Create the IAM roles
 
-1. In your console, go to your [IAM Dashboard](https://us-east-1.console.aws.amazon.com/iam/).
+1. In your console, go to your [IAM Dashboard](https://us-west-2.console.aws.amazon.com/iam/).
 2. Go to Policies in the right-hand side menu.
 3. Create one policie named for example Bedrock-InvokeModel-Policy
    ```json
@@ -78,28 +84,34 @@ pip install -r requirements.txt
     }
    ```
   4. Create one policie named for example Bedrock-S3-GetObject
-    ```json
-    {
-        "Version": "2012-10-17",
-        "Statement": [
-            {
-                "Sid": "VisualEditor0",
-                "Effect": "Allow",
-                "Action": "s3:GetObject",
-                "Resource": "arn:aws:s3:::bedrockreinvent/agent_aws_openapi.json"
+
+  ```json
+   {
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "VisualEditor0",
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": [
+                "arn:aws:s3:::*"
+                ]
             }
         ]
     }
-    ```
-  5. Create a role named AmazonBedrockExecutionRoleForAgents_workshop and attach the two policies we just created previously. 
+   ```
+
+    
+  5. Create a role named AmazonBedrockExecutionRoleForAgents and attach the two policies we just created previously. 
 
 
-
-## Building an Agent
+  ## Building an Agent
 
 To get started with the agent, open the Bedrock console, select Agents in the left navigation panel, then choose Create Agent.
 
-![Agent Start](/images/agents-for-amazon-bedrock-1.png)
+![Agent Start](images/agents-for-amazon-bedrock-1.png)
+
+
 
 This starts the agent creation workflow.
 
@@ -111,22 +123,19 @@ Agent-AWS
 
 Agent AWS is an automated, AI-powered agent that helps customers with knowledge of AWS by querying the AWS Well-Architected Framework and writing code.
 ```
+![Create Agent](images/create-agent.png)
 
-![Agent Start](/images/agent_details.png)
 
-2. Select a foundation model from Bedrock that fits your use case. Here, you provide an instruction to your agent in natural language. The instruction tells the agent what task it’s supposed to perform and the persona it’s supposed to assume. For example, “You are an expert AWS Certified Solutions Architect. Your role is to help customers understand best practices on building on AWS.”
+2. Select a foundation model from Bedrock that fits your use case. For this project we selected Antrophic Claude Sonnet v2 but feel free to try other models. Here, you provide an instruction to your agent in natural language. The instruction tells the agent what task it’s supposed to perform and the persona it’s supposed to assume. 
+For example, “You are an expert AWS Certified Solutions Architect. Your role is to help customers understand best practices on building on AWS.”
 
-![Agent Model](/images/agent_model.png)
+![Agent Model](/images/agent_details.png)
+
+Copy the Agent ID, we need to update our codes by using this Agent ID.
 
 3. Skip the Add Action Groups and create an Agent. 
 
-![Agent Model](/images/agent_create.png)
-
-4. Now you can test your agent, but you won’t find it very helpful at the moment if you ask it AWS related questions such as "How can I design secure VPCs?"
-
-![Agent Model](/images/agent_not_working.png)
-
-This is where we have to develop "tools" for the agent which are orchestrated through the action groups.
+4. This is where we have to develop "tools" for the agent which are orchestrated through the action groups.
 
 ## Building Agent Tools
 
@@ -140,51 +149,6 @@ To learn more about how the data was collected and embeddings read this [blog po
 
 The code used to collect the data is in `ingest.py`
 
-### Code Generation Tool
-The code for this tool, uses a call to the Claude-V2 model to generate code based on a user's request.
-
-### Testing tools
-
-To test the tools, you can run
-
-```bash
-python test_tools.py
-```
-
-You should get output similar to this
-
-```
- AWS provides a set of best practices for designing secure VPCs. These best practices include creating network layers, controlling traffic at all layers, automating network protection, implementing inspection and protection, and considering whether resources need to be in public subnets.
- Here is some documentation for more details: 
-https://docs.aws.amazon.com/wellarchitected/latest/security-pillar/protecting-networks.html
-https://docs.aws.amazon.com/wellarchitected/latest/security-pillar/sec_network_protection_create_layers.html
-https://docs.aws.amazon.com/wellarchitected/latest/framework/sec_network_protection_create_layers.html
-https://docs.aws.amazon.com/wellarchitected/latest/framework/sec_network_protection_create_layers.html
-```
-
-```python
-import boto3
-
-def upload_file_to_s3(file_name, bucket, object_name=None):
-    """Upload a file to an S3 bucket
-    
-    Args:
-        file_name (str): File to upload
-        bucket (str): Bucket to upload to
-        object_name (str): S3 object name. If not specified then file_name is used
-    """
-    
-    # If S3 object_name was not specified, use file_name
-    if object_name is None:
-        object_name = file_name
-
-    # Upload the file    
-    s3_client = boto3.client('s3')
-    s3_client.upload_file(file_name, bucket, object_name)
-...    
-```
-Feel free to play around with the prompts by editing `test_tools.py`
-
 ## Building the Lambda Function
 
 For our Agent to use our tools, we must encapsulate the logic into a lambda function. `index.py` has the logic to parse a request from the agent, and then pick the correct tool to use. The function will then format the response and send it back to the agent.
@@ -193,9 +157,11 @@ For our Agent to use our tools, we must encapsulate the logic into a lambda func
 
 We will package this Lambda function as a container, so create a new ECR following these [instructions](https://docs.aws.amazon.com/AmazonECR/latest/userguide/repository-create.html). I called mine `bedrock_sa_tools`
 
-![ECR Repo](/images/ecr_repo.png)
+![ECR](images/ecr.png)
 
 Once the repo is created, follow the instructions in the `View push commands` button to upload the Docker Image to ECR.
+
+![View Push Commands](images/ecr-push-commands3.png)
 
 ### Create the Lambda Function
 
@@ -205,19 +171,25 @@ Once the repo is created, follow the instructions in the `View push commands` bu
 
 3. Click on Create function button in the bottom of the page 
 
+![Agent Start](images/lambda-function.png)
+
 ### Update Lambda Permissions
 
 1. Once the function is created, click on the Configuration Tab in the same page and `Choose Permissions` from the left side panel
 
 2. Click on Add permissions button in Resource-based policy statement section to provide the permission to invoke lambda functions from bedrock
 
-![Lambda Permissions](/images/lambda_perms.png)
+![Lambda Permissions](images/lambda-permisson.png)
 
 3. Provide Statement Id as `agent` , Principal as `bedrock.amazonaws.com` and Action as `lambda:InvokeFunction`. Click Save after adding all the above three information.
 
-![Lambda Permissions](/images/lambda_perms_2.png)
+![Lambda Permissions](images/lambda_perms_2.png)
 
-4. Add the following Policy Statement to your Execution role, so Lambda can call Bedrock. (Details [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_manage-attach-detach.html#add-policies-console))
+4. Change the lambda settings for the memory and the timeout values:
+
+![Lambda Settings](images/lambda-settings.png)
+
+5. Add the following Policy Statement to your Execution role, so Lambda can call Bedrock. (Details [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_manage-attach-detach.html#add-policies-console))
 ```json
 {
     "Version": "2012-10-17",
@@ -246,7 +218,7 @@ To test your Lambda function:
     "alias": "TSTALIASID",
     "name": "Agent-AWS",
     "version": "DRAFT",
-    "id": "KQI6ICMKZZ"
+    "id": "********" (Copy your Amazon Bedrock Agent Id to here)
   },
   "sessionId": "975786472213626",
   "httpMethod": "GET",
@@ -268,7 +240,50 @@ To test your Lambda function:
 
 3. Click on "Test" to execute the Lambda function. You should see the results of the function invocation, which will be a response from the Titan Model.
 
-![Lambda Results](/images/lambda_results.png)
+![Lambda Results](images/lambda-test.png)
+
+Now we need to create our second lambda function in order to be able to draw the architecture with drawio. Perform the same steps as above: 
+
+- First create an ECR repository
+- Change your working directory to "drawing_function"
+- Run below commands: 
+``` bash
+
+        #chmod +x make_pil_layer.sh
+        #chmod +x make_request_layer.sh
+        #./make_pil_layer.sh
+        #./make_request_layer.sh
+
+```
+- View push commands in ECR and run those commands to upload your image to ECR
+- Create Lambda function in the same way as above function (Add the inline policy for bedrock invocation; Add Resource based policy for Bedrock and change the memory and timeout values)
+- Additionally we need to add the below inlice policy to the lambda execution role to upload the drawings to the S3 bucket:
+
+```json
+{
+	"Version": "2012-10-17",
+	"Statement": [
+		{
+			"Effect": "Allow",
+			"Action": [
+				"s3:PutObject",
+				"s3:GetObject",
+				"s3:ListBucket"
+			],
+			"Resource": [
+				"arn:aws:s3:::YOURBUCKETNAME/*",
+				"arn:aws:s3:::YOURBUCKETNAME"
+			]
+		}
+	]
+}
+```
+
+- You should also add this bucket name as an **environment variables** to lambda function as **S3_BUCKET_NAME:YOUR_BUCKET_NAME**
+
+At the end you should have these two functions:
+
+![Lambda Functions](images/lambda-functions.png)
 
 ## Upload OpenAPI Spec
 
@@ -286,27 +301,48 @@ An action is a task that the agent can perform automatically by making API calls
 
 2. Click on the `Working draft` link to go into the Agent and add the agent action.
 
-3. Click on the `Add` button in Action groups section to create a new Action Group for the agent.
+3. Click on the `Add` button in Action groups section to create a new Action Group for the agent. You can use "API that helps customer with knowledge of AWS by querying the AWS Well Architected Framework, writing codes and creating diagrams."
+for the description.
 
-4. Provide the Action Group Name and Description (Optional). Choose the Lambda function and the S3 object for the API spec uploaded earlier.
+![Action Group](images/action-group.png)
 
-![Action Group](/images/action_group.png)
+4. For the "Action Group Invocation" Select the lambda function we created "bedrock_sa_tools"
+
+![Action Group2](images/action-group2.png)
+
+Select the S3 object for the API spec uploaded earlier(agent_aws_openapi.json)
+
+![Action Group3](images/action_group3.png)
 
 5. Click on `Save and exit` button in the right bottom of the page.
 
-6. Once the Agent Status is in `Ready` state in Agent home page. You can start the testing.
+6. Do the same for drawing function agent and create a new action group for this one. Only difference is from "Action Group Type", you need to select 
+"Define with function details" and add keywords as parameters as below:
 
+![Drawing](images/drawing.png)
+![Drawing2](images/drawing2.png)
 
-## Security
+6. Once the Agent Status is in `Ready` state in Agent home page. You should see the below action groups and you can start the testing.
 
-See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
+![AG](images/action-groups.png)
 
-## License
+## Running the Chatbot
 
+To start the Streamlit application, first you need to change the "Agent ID" in the agent2_tools.py in the drawings folder:
+```bash
+
+streamlit run chatbot_st.py
+```
+
+This will launch the chatbot interface in your default web browser. Make sure the port 8501 is open for streamlit external ip connection.
+
+Security
+See CONTRIBUTING for more information.
+
+License
 This library is licensed under the MIT-0 License. See the LICENSE file.
 
-## Disclaimer
-
-
+Disclaimer
 "The solution architecture sample code is provided without any guarantees, and you're not recommended to use it for production-grade workloads. The intention is to provide content to build and learn. Be sure of reading the licensing terms."
+
 
